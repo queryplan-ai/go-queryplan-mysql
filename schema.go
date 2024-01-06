@@ -32,15 +32,13 @@ type MysqlColumn struct {
 	Extra         string  `json:"extra"`
 }
 
-const dbName = ""
-
-func sendSchemaToQueryPlan() error {
-	tables, err := listTables()
+func sendSchemaToQueryPlan(dbName string) error {
+	tables, err := listTables(dbName)
 	if err != nil {
 		return errors.Wrap(err, "failed to list tables")
 	}
 
-	primaryKeys, err := listPrimaryKeys()
+	primaryKeys, err := listPrimaryKeys(dbName)
 	if err != nil {
 		return errors.Wrap(err, "failed to list primary keys")
 	}
@@ -84,7 +82,7 @@ func sendSchemaToQueryPlan() error {
 	return nil
 }
 
-func listPrimaryKeys() (map[string][]string, error) {
+func listPrimaryKeys(dbName string) (map[string][]string, error) {
 	db, err := getSessionFunc()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get mysql session")
@@ -115,7 +113,7 @@ func listPrimaryKeys() (map[string][]string, error) {
 	return primaryKeys, nil
 }
 
-func listTables() ([]MysqlTable, error) {
+func listTables(dbName string) ([]MysqlTable, error) {
 	// read the schema from mysql
 	db, err := getSessionFunc()
 	if err != nil {

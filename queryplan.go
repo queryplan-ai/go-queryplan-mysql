@@ -24,9 +24,10 @@ func init() {
 }
 
 type QueryPlanOpts struct {
-	Token       string
-	Endpoint    string
-	Environment string
+	Token        string
+	Endpoint     string
+	Environment  string
+	DatabaseName string
 }
 
 func InitQueryPlan(opts QueryPlanOpts, getFunc func() (*sql.DB, error)) {
@@ -47,7 +48,7 @@ func InitQueryPlan(opts QueryPlanOpts, getFunc func() (*sql.DB, error)) {
 
 	go func() {
 		for {
-			if err := sendSchemaToQueryPlan(); err != nil {
+			if err := sendSchemaToQueryPlan(opts.DatabaseName); err != nil {
 				LogError(err)
 			}
 
