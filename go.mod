@@ -4,6 +4,7 @@ go 1.21.5
 
 require (
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
+	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
