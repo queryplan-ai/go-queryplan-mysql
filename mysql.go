@@ -39,18 +39,12 @@ type QueryPlanQueryPayload struct {
 }
 
 func sendQueriesToQueryPlan() error {
-	pendingQueriesMutex.Lock()
-	defer pendingQueriesMutex.Unlock()
-
-	pendingTransactionsMutex.Lock()
-	defer pendingTransactionsMutex.Unlock()
-
-	if len(pendingQueries) == 0 {
+	if pendingQueries.Len() == 0 {
 		return nil
 	}
 
 	cleanedQueries := []QueryPlanQuery{}
-	for _, query := range pendingQueries {
+	for _, query := range pendingQueries.GetAll() {
 		redactedQuery, err := redactSQL(query.Query)
 		if err != nil {
 			fmt.Printf("failed to redact query: %q\n", query.Query)
@@ -83,7 +77,7 @@ func sendQueriesToQueryPlan() error {
 	// add transactions but parse the callstacks when we add them
 	payload.Transactions = []QueryPlanTransaction{}
 
-	for _, tx := range pendingTransactions {
+	for _, tx := range pendingTransactions.GetAll() {
 		var parsedEntries []CallStackEntry
 		for _, line := range tx.CallStack {
 			entry, err := parseCallStackLine(line)
@@ -142,8 +136,8 @@ func sendQueriesToQueryPlan() error {
 		return errors.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
-	pendingQueries = []QueryPlanQuery{}
-	pendingTransactions = []QueryPlanTransaction{}
+	pendingQueries.Clear()
+	pendingTransactions.Clear()
 
 	return nil
 }
@@ -155,9 +149,6 @@ func itoa(i int) string {
 func queueQueryToSend(stmt *queryPlanStmt, dur time.Duration) error {
 	activeTransactionsMutex.Lock()
 	defer activeTransactionsMutex.Unlock()
-
-	pendingQueriesMutex.Lock()
-	defer pendingQueriesMutex.Unlock()
 
 	// look through active transactions to see if this query is using a connection
 	// that is part of an active transaction
@@ -174,7 +165,8 @@ func queueQueryToSend(stmt *queryPlanStmt, dur time.Duration) error {
 		}
 	}
 
-	pendingQueries = append(pendingQueries, QueryPlanQuery{
+	// if pending queries is too big, we
+	pendingQueries.Add(QueryPlanQuery{
 		ExecutedAt: time.Now().UnixNano(),
 		Query:      stmt.query,
 		Duration:   dur.Nanoseconds(),

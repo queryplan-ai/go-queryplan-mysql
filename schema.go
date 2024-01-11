@@ -33,6 +33,10 @@ type MysqlColumn struct {
 }
 
 func sendSchemaToQueryPlan(dbName string) error {
+	if getSessionFunc == nil {
+		return nil
+	}
+
 	tables, err := listTables(dbName)
 	if err != nil {
 		return errors.Wrap(err, "failed to list tables")

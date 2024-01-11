@@ -4,12 +4,17 @@ import (
 	"database/sql/driver"
 	"sync"
 	"time"
+
+	"tailscale.com/util/ringbuffer"
 )
 
+const defaultMaxPendingTransactionsSize = 10000
+
 var (
+	maxPendingTransactionsSize = defaultMaxPendingTransactionsSize
+
 	// pendingTransactions are completed transactions that need to be sent
-	pendingTransactions      = []QueryPlanTransaction{}
-	pendingTransactionsMutex = sync.Mutex{}
+	pendingTransactions = ringbuffer.New[QueryPlanTransaction](maxPendingTransactionsSize)
 
 	// activeTransactions is currently open/running tx.  these will not be send
 	activeTransactions      = make(map[int64]*QueryPlanTransaction)
@@ -28,9 +33,7 @@ func (qt *queryPlanTx) Commit() error {
 		delete(activeTransactions, qt.id)
 		transaction.Duration = time.Since(time.Unix(0, transaction.BeginAt)).Nanoseconds()
 
-		pendingTransactionsMutex.Lock()
-		pendingTransactions = append(pendingTransactions, *transaction)
-		pendingTransactionsMutex.Unlock()
+		pendingTransactions.Add(*transaction)
 	}
 	activeTransactionsMutex.Unlock()
 
@@ -45,9 +48,7 @@ func (qt *queryPlanTx) Rollback() error {
 		transaction.Duration = time.Since(time.Unix(0, transaction.BeginAt)).Nanoseconds()
 		transaction.IsRollback = true
 
-		pendingTransactionsMutex.Lock()
-		pendingTransactions = append(pendingTransactions, *transaction)
-		pendingTransactionsMutex.Unlock()
+		pendingTransactions.Add(*transaction)
 	}
 	activeTransactionsMutex.Unlock()
 

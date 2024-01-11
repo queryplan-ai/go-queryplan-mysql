@@ -2,11 +2,13 @@ package queryplan
 
 import (
 	"database/sql"
-	"sync"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"tailscale.com/util/ringbuffer"
 )
+
+const defaultMaxPendingQueriesSize = 10000
 
 var (
 	getSessionFunc func() (*sql.DB, error)
@@ -15,8 +17,9 @@ var (
 	queryPlanEndpoint    = ""
 	queryPlanEnvironment = ""
 
-	pendingQueries      = []QueryPlanQuery{}
-	pendingQueriesMutex = sync.Mutex{}
+	pendingQueries = ringbuffer.New[QueryPlanQuery](maxPendingQueriesSize)
+
+	maxPendingQueriesSize = defaultMaxPendingQueriesSize
 )
 
 func init() {
@@ -28,6 +31,9 @@ type QueryPlanOpts struct {
 	Endpoint     string
 	Environment  string
 	DatabaseName string
+
+	MaxPendingQueriesSize      int
+	MaxPendingTransactionsSize int
 }
 
 func InitQueryPlan(opts QueryPlanOpts, getFunc func() (*sql.DB, error)) {
@@ -35,6 +41,19 @@ func InitQueryPlan(opts QueryPlanOpts, getFunc func() (*sql.DB, error)) {
 	skemticToken = opts.Token
 	queryPlanEndpoint = opts.Endpoint
 	queryPlanEnvironment = opts.Environment
+
+	maxPendingQueriesSize := defaultMaxPendingQueriesSize
+	if opts.MaxPendingQueriesSize > 0 {
+		maxPendingQueriesSize = opts.MaxPendingQueriesSize
+	}
+
+	maxPendingTransactionsSize := defaultMaxPendingTransactionsSize
+	if opts.MaxPendingTransactionsSize > 0 {
+		maxPendingTransactionsSize = opts.MaxPendingTransactionsSize
+	}
+
+	pendingQueries = ringbuffer.New[QueryPlanQuery](maxPendingQueriesSize)
+	pendingTransactions = ringbuffer.New[QueryPlanTransaction](maxPendingTransactionsSize)
 
 	go func() {
 		for {
