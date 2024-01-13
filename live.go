@@ -18,6 +18,10 @@ func GetMysqlConnection() (*sql.DB, error) {
 		return nil, errors.New("mysql connection data is nil")
 	}
 
+	if mysqlConnectionData.Host == "" && mysqlConnectionData.URI == "" {
+		return nil, errors.New("one of params or uri is required")
+	}
+
 	// first, if the connection uri is set, just use that
 	if mysqlConnectionData.URI != "" {
 		connectionString = mysqlConnectionData.URI
