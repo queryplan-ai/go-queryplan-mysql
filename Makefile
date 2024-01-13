@@ -28,4 +28,6 @@ performance: build
 		mysql:8.2
 	@sleep 20
 	QUERYPLAN_DB_URI="qpperformance:qpperformance@tcp(localhost:33306)/qpperformance" ./bin/performance
+	docker rm -f qpperformance || true
+
 
