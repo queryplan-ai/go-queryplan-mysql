@@ -33,10 +33,6 @@ type MysqlColumn struct {
 }
 
 func sendSchemaToQueryPlan(dbName string) error {
-	if getSessionFunc == nil {
-		return nil
-	}
-
 	tables, err := listTables(dbName)
 	if err != nil {
 		return errors.Wrap(err, "failed to list tables")
@@ -87,7 +83,7 @@ func sendSchemaToQueryPlan(dbName string) error {
 }
 
 func listPrimaryKeys(dbName string) (map[string][]string, error) {
-	db, err := getSessionFunc()
+	db, err := GetMysqlConnection()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get mysql session")
 	}
@@ -119,7 +115,7 @@ func listPrimaryKeys(dbName string) (map[string][]string, error) {
 
 func listTables(dbName string) ([]MysqlTable, error) {
 	// read the schema from mysql
-	db, err := getSessionFunc()
+	db, err := GetMysqlConnection()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get mysql session")
 	}

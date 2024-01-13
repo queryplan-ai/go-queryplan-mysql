@@ -2,25 +2,49 @@ package queryplan
 
 import (
 	"database/sql"
+	"fmt"
+	"sync"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"tailscale.com/util/ringbuffer"
 )
 
-const defaultMaxPendingQueriesSize = 10000
+const (
+	defaultMaxPendingQueriesSize      = 10000
+	defaultMaxPendingTransactionsSize = 10000
+)
 
 var (
-	getSessionFunc func() (*sql.DB, error)
-
 	skemticToken         = ""
 	queryPlanEndpoint    = ""
 	queryPlanEnvironment = ""
 
+	// pendingQueries are completed queries that need to be sent
 	pendingQueries = ringbuffer.New[QueryPlanQuery](maxPendingQueriesSize)
 
-	maxPendingQueriesSize = defaultMaxPendingQueriesSize
+	// pendingTransactions are completed transactions that need to be sent
+	pendingTransactions = ringbuffer.New[QueryPlanTransaction](maxPendingTransactionsSize)
+
+	// activeTransactions is currently open/running tx.  these will not be send
+	activeTransactions      = make(map[int64]*QueryPlanTransaction)
+	activeTransactionsMutex = sync.Mutex{}
+
+	maxPendingQueriesSize      = defaultMaxPendingQueriesSize
+	maxPendingTransactionsSize = defaultMaxPendingTransactionsSize
+
+	mysqlConnectionData *MysqlConnectionData
 )
+
+type MysqlConnectionData struct {
+	Host         string
+	Port         int
+	User         string
+	Pass         string
+	DatabaseName string
+
+	URI string
+}
 
 func init() {
 	sql.Register("mysql-queryplan", &queryPlanDriver{sqlDriver: mysql.MySQLDriver{}})
@@ -32,12 +56,18 @@ type QueryPlanOpts struct {
 	Environment  string
 	DatabaseName string
 
+	MysqlHost string
+	MysqlPort int
+	MysqlUser string
+	MysqlPass string
+
+	MysqlURI string
+
 	MaxPendingQueriesSize      int
 	MaxPendingTransactionsSize int
 }
 
-func InitQueryPlan(opts QueryPlanOpts, getFunc func() (*sql.DB, error)) {
-	getSessionFunc = getFunc
+func InitQueryPlan(opts QueryPlanOpts) {
 	skemticToken = opts.Token
 	queryPlanEndpoint = opts.Endpoint
 	queryPlanEnvironment = opts.Environment
@@ -55,6 +85,17 @@ func InitQueryPlan(opts QueryPlanOpts, getFunc func() (*sql.DB, error)) {
 	pendingQueries = ringbuffer.New[QueryPlanQuery](maxPendingQueriesSize)
 	pendingTransactions = ringbuffer.New[QueryPlanTransaction](maxPendingTransactionsSize)
 
+	// parse the mysql connection data from the opts
+	mysqlConnectionData = &MysqlConnectionData{
+		Host:         opts.MysqlHost,
+		Port:         opts.MysqlPort,
+		User:         opts.MysqlUser,
+		Pass:         opts.MysqlPass,
+		DatabaseName: opts.DatabaseName,
+
+		URI: opts.MysqlURI,
+	}
+
 	go func() {
 		for {
 			time.Sleep(5 * time.Second)
@@ -65,7 +106,9 @@ func InitQueryPlan(opts QueryPlanOpts, getFunc func() (*sql.DB, error)) {
 		}
 	}()
 
+	fmt.Println("b")
 	go func() {
+		fmt.Println("d")
 		for {
 			if err := sendSchemaToQueryPlan(opts.DatabaseName); err != nil {
 				LogError(err)

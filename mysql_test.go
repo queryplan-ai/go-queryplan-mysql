@@ -64,7 +64,7 @@ func Test_queueQueryToSend(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			InitQueryPlan(QueryPlanOpts{
 				MaxPendingQueriesSize: tt.ringBufferSize,
-			}, nil)
+			})
 
 			for _, stmtAndDur := range tt.stmtsAndDurations {
 				err := queueQueryToSend(stmtAndDur.stmt, stmtAndDur.dur)
