@@ -8,7 +8,6 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2
 	go.uber.org/zap v1.26.0
-	tailscale.com v1.56.1
 )
 
 require (

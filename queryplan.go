@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"tailscale.com/util/ringbuffer"
+	"github.com/queryplan-ai/go-queryplan-mysql/ringbuffer"
 )
 
 const (
