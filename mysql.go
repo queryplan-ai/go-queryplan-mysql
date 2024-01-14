@@ -55,7 +55,7 @@ func sendQueriesToQueryPlan() error {
 		for _, line := range query.CallStack {
 			entry, err := parseCallStackLine(line)
 			if err != nil {
-				LogWarnf("Failed to parse call stack line: %v", err)
+				logger.Warnf("Failed to parse call stack line: %v", err)
 			}
 			parsedEntries = append(parsedEntries, entry)
 		}
@@ -82,7 +82,7 @@ func sendQueriesToQueryPlan() error {
 		for _, line := range tx.CallStack {
 			entry, err := parseCallStackLine(line)
 			if err != nil {
-				LogWarnf("Failed to parse call stack line: %v", err)
+				logger.Warnf("Failed to parse call stack line: %v", err)
 			}
 			parsedEntries = append(parsedEntries, entry)
 		}

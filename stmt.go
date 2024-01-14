@@ -33,7 +33,7 @@ func (qs *queryPlanStmt) Query(args []driver.Value) (driver.Rows, error) {
 	dur := time.Since(start)
 
 	if err := queueQueryToSend(qs, dur); err != nil {
-		LogWarnf("Failed to queue query to send to queryplan: %v", err)
+		logger.Warnf("Failed to queue query to send to queryplan: %v", err)
 	}
 
 	return result, err
@@ -48,7 +48,7 @@ func (qs *queryPlanStmt) QueryContext(ctx context.Context, args []driver.NamedVa
 		dur := time.Since(start)
 
 		if err := queueQueryToSend(qs, dur); err != nil {
-			LogWarnf("Failed to queue query to send to queryplan: %v", err)
+			logger.Warnf("Failed to queue query to send to queryplan: %v", err)
 		}
 
 		return result, err
@@ -64,7 +64,7 @@ func (qs *queryPlanStmt) QueryContext(ctx context.Context, args []driver.NamedVa
 	dur := time.Since(start)
 
 	if err := queueQueryToSend(qs, dur); err != nil {
-		LogWarnf("Failed to queue query to send to queryplan: %v", err)
+		logger.Warnf("Failed to queue query to send to queryplan: %v", err)
 	}
 
 	return result, err
@@ -79,7 +79,7 @@ func (qs *queryPlanStmt) Exec(args []driver.Value) (driver.Result, error) {
 	dur := time.Since(start)
 
 	if err := queueQueryToSend(qs, dur); err != nil {
-		LogWarnf("Failed to queue query to send to queryplan: %v", err)
+		logger.Warnf("Failed to queue query to send to queryplan: %v", err)
 	}
 
 	return result, err
@@ -94,7 +94,7 @@ func (qs *queryPlanStmt) ExecContext(ctx context.Context, args []driver.NamedVal
 		dur := time.Since(start)
 
 		if err := queueQueryToSend(qs, dur); err != nil {
-			LogWarnf("Failed to queue query to send to queryplan: %v", err)
+			logger.Warnf("Failed to queue query to send to queryplan: %v", err)
 		}
 
 		return result, err
@@ -110,7 +110,7 @@ func (qs *queryPlanStmt) ExecContext(ctx context.Context, args []driver.NamedVal
 	dur := time.Since(start)
 
 	if err := queueQueryToSend(qs, dur); err != nil {
-		LogWarnf("Failed to queue query to send to queryplan: %v", err)
+		logger.Warnf("Failed to queue query to send to queryplan: %v", err)
 	}
 
 	return result, err

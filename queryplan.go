@@ -34,6 +34,8 @@ var (
 	maxPendingTransactionsSize = defaultMaxPendingTransactionsSize
 
 	mysqlConnectionData *MysqlConnectionData
+
+	logger *LeveledLogger
 )
 
 type MysqlConnectionData struct {
@@ -68,6 +70,10 @@ type QueryPlanOpts struct {
 }
 
 func InitQueryPlan(opts QueryPlanOpts) {
+	logger = &LeveledLogger{
+		Level: 4, // debug
+	}
+
 	skemticToken = opts.Token
 	queryPlanEndpoint = opts.Endpoint
 	queryPlanEnvironment = opts.Environment
@@ -101,7 +107,7 @@ func InitQueryPlan(opts QueryPlanOpts) {
 			time.Sleep(5 * time.Second)
 
 			if err := sendQueriesToQueryPlan(); err != nil {
-				LogError(err)
+				logger.Error(err)
 			}
 		}
 	}()
@@ -111,7 +117,7 @@ func InitQueryPlan(opts QueryPlanOpts) {
 		fmt.Println("d")
 		for {
 			if err := sendSchemaToQueryPlan(opts.DatabaseName); err != nil {
-				LogError(err)
+				logger.Error(err)
 			}
 
 			time.Sleep(45 * time.Minute)
